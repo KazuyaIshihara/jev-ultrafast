@@ -160,6 +160,27 @@ class Agent:
             raise ValueError("Unknown command")
         return self.snapshot()
 
+    def next_goal(self, goals):
+        """Start a new goal on the same browser tab. History and budgets reset; the page is re-observed."""
+        task = goals.strip() if isinstance(goals, str) else "\n".join(goals).strip()
+        if not task:
+            raise ValueError("Supply a task")
+        self.pending_text = None
+        self.state.update(
+            goal=task,
+            plan=[task],
+            plan_index=0,
+            decision=None,
+            history=[],
+            decisions=[],
+            text_calls=[],
+            status="ready",
+            started_at=None,
+            elapsed_ms=0,
+        )
+        self.state["page"] = self.browser.observe(screenshot=self.screenshots)
+        return self.snapshot()
+
     def run(self):
         while self.state["status"] not in {"done", "blocked"}:
             yield self.command("tick")
